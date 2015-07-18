@@ -242,10 +242,14 @@ class mod_scheduler_renderer extends plugin_renderer_base {
                         $slottable->scheduler->get_teacher_name(),
                         get_string('location', 'scheduler'),
                         get_string('comments', 'scheduler'));
-        $table->align = array('left', 'left', 'left', 'left');
+        $table->align = array('left', 'left', 'left', 'left', 'left');
 
         if ($slottable->showgrades) {
             $table->head[] = get_string('grade', 'scheduler');
+            $table->align[] = 'left';
+        }
+        if ($slottable->showactions) {
+            $table->head[] = '';
             $table->align[] = 'left';
         }
 
@@ -313,6 +317,16 @@ class mod_scheduler_renderer extends plugin_renderer_base {
                     $gradedata = $this->format_grade($slottable->scheduler, $slot->grade);
                 }
                 $rowdata[] = $gradedata;
+            }
+
+            if ($slottable->showactions) {
+                $actions = '';
+                if ($slot->cancancel) {
+                    $buttonurl = new moodle_url($slottable->actionurl,
+                                     array('what' => 'cancel', 'appointmentid' => $slot->appointmentid));
+                    $button = new single_button($buttonurl, get_string('cancelbooking', 'scheduler'));
+                }
+                $rowdata[] = $actions;
             }
 
             $table->data[] = $rowdata;
@@ -449,77 +463,28 @@ class mod_scheduler_renderer extends plugin_renderer_base {
             $textoptions = array('context' => $booker->scheduler->context);
             $rowdata[] = format_text($slot->notes, $slot->notesformat, $textoptions);
 
-            if ($booker->style == 'multi') {
-                $inputname = "slotcheck[{$slot->slotid}]";
-                $inputelm = html_writer::checkbox($inputname, $slot->slotid, $slot->bookedbyme, '', array('class' => 'slotbox'));
-            } else {
-                $inputparms = array('type' => 'radio', 'name' => 'slotid', 'value' => $slot->slotid);
-                if ($slot->bookedbyme) {
-                    $inputparms['checked'] = 1;
-                }
-                $inputelm = html_writer::empty_tag('input', $inputparms);
-            }
+            $bookurl = new moodle_url($booker->actionurl, array('what' => 'savechoice', 'slotid' => $slot->slotid));
+            $button = new single_button($bookurl, get_string('bookslot', 'scheduler'));
+
+            $rowdata[] = $this->render($button);
+
+            $rowdata[] = $this->user_profile_link($booker->scheduler, $slot->teacher);
 
             $groupinfo = $slot->bookedbyme ? get_string('complete', 'scheduler') : $slot->groupinfo;
             if ($slot->otherstudents) {
                 $groupinfo .= $this->render($slot->otherstudents);
             }
 
-            $rowdata[] = $inputelm;
-
-            $rowdata[] = $this->user_profile_link($booker->scheduler, $slot->teacher);
             $rowdata[] = $groupinfo;
 
-            $rowclass = ($slot->bookedbyme) ? 'booked' : 'bookable';
-
             $table->data[] = $rowdata;
-            $table->rowclasses[] = $rowclass;
 
             $previoustime = $starttime;
             $previousendtime = $endtime;
             $previousdate = $startdate;
         }
 
-        if ($booker->style == 'multi' && $booker->maxselect > 0) {
-            $this->page->requires->yui_module('moodle-mod_scheduler-limitchoices',
-                            'M.mod_scheduler.limitchoices.init', array($booker->maxselect) );
-        }
-
-        $controls = '';
-        if (count($booker->groupchoice) > 0) {
-            $controls .= get_string('appointfor', 'scheduler');
-            $choices = $booker->groupchoice;
-            $choices[0] = get_string('appointsolo', 'scheduler');
-            ksort($choices);
-            $controls .= html_writer::select($choices, 'appointgroup', '', '');
-            $controls .= $this->help_icon('appointagroup', 'scheduler');
-            $controls .= ' ';
-        }
-        $controls .= html_writer::empty_tag('input', array('type' => 'submit',
-                        'class' => 'bookerbutton', 'name' => 'savechoice',
-                        'value' => get_string('savechoice', 'scheduler')));
-        $controls .= ' ';
-        if ($booker->candisengage) {
-            $disengagelink = new moodle_url('/mod/scheduler/view.php',
-                            array('what' => 'disengage',
-                                            'id' => $booker->scheduler->cmid,
-                                            'sesskey' => sesskey() ));
-            $controls .= $this->action_link($disengagelink, get_string('disengage', 'scheduler'));
-        }
-
-        $o = '';
-        $o .= html_writer::start_tag('form', array('action' => $booker->actionurl,
-                        'method' => 'post', 'class' => 'bookerform'));
-
-        $o .= html_writer::input_hidden_params($booker->actionurl);
-
-        $o .= html_writer::table($table);
-
-        $o .= html_writer::div($controls, 'bookercontrols');
-
-        $o .= html_writer::end_tag('form');
-
-        return $o;
+        return html_writer::table($table);
     }
 
     public function render_scheduler_command_bar(scheduler_command_bar $commandbar) {

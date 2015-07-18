@@ -18,6 +18,11 @@ require_once($CFG->dirroot.'/mod/scheduler/studentview.controller.php');
 // Clean all late slots (for everybody).
 $scheduler->free_late_unused_slots();
 
+$actionurl = new moodle_url('/mod/scheduler/view.php', array(
+        'id' => $scheduler->cmid,
+        'sesskey' => sesskey()
+));
+
 $mygroups = groups_get_all_groups($scheduler->courseid, $USER->id, $cm->groupingid, 'g.id, g.name');
 if ($scheduler->is_group_scheduling_enabled()) {
 	$mygroupsforscheduling = groups_get_all_groups($scheduler->courseid, $USER->id, $scheduler->bookingrouping, 'g.id, g.name');
@@ -94,7 +99,7 @@ if (count($upcomingslots) > 0) {
             $others = null;
         }
 
-        $slottable->add_slot($slot, $appointment, $others);
+        $slottable->add_slot($slot, $appointment, $others, true);
     }
 
     echo $output->heading(get_string('upcomingslots', 'scheduler'), 3);
@@ -102,7 +107,7 @@ if (count($upcomingslots) > 0) {
 }
 
 $bookablecnt = $scheduler->count_bookable_appointments($USER->id, true);
-$bookableslots = $scheduler->get_slots_available_to_student($USER->id, true, array_keys($mygroups));
+$bookableslots = array_values($scheduler->get_slots_available_to_student($USER->id, true, array_keys($mygroups)));
 
 if ($bookablecnt == 0) {
     echo html_writer::div(get_string('canbooknofurtherappointments', 'scheduler'), 'studentbookingmessage');
@@ -117,15 +122,24 @@ if ($bookablecnt == 0) {
     // The student can book further appointments, and slots are available.
     // Show the booking form.
 
-    $actionurl = new moodle_url('/mod/scheduler/view.php', array (
-        'what' => 'savechoice',
-        'id' => $scheduler->cmid,
-        'sesskey' => sesskey()
-    ));
-    $style = ($scheduler->maxbookings == 1) || ($scheduler->is_group_scheduling_enabled()) ? 'one' : 'multi';
-    $booker = new scheduler_slot_booker($scheduler, $USER->id, $actionurl, $style, $bookablecnt);
-    $bookedany = false;
-    foreach ($bookableslots as $slot) {
+    if ($scheduler->is_group_scheduling_enabled()) {
+        $booker->groupchoice = array();
+        foreach ($mygroupsforscheduling as $group) {
+            $booker->groupchoice[$group->id] = $group->name;
+        }
+    }
+
+    $pagesize = 25;
+    $total = count($bookableslots);
+    $start = ($offset >= 0) ? $offset * $pagesize : 0;
+    $end = $start + $pagesize;
+    if ($end > $total) {
+        $end = $total;
+    }
+
+    $booker = new scheduler_slot_booker($scheduler, $USER->id, $actionurl, $bookablecnt);
+    for ($idx = $start; $idx < $end; $idx++) {
+        $slot = $bookableslots[$idx];
         $booked = !is_null($slot->get_student_appointment($USER->id));
 
         if ($slot->is_groupslot() && has_capability('mod/scheduler:seeotherstudentsbooking', $context)) {
@@ -154,15 +168,6 @@ if ($bookablecnt == 0) {
         }
 
         $booker->add_slot($slot, !$booked, $booked, $groupinfo, $others);
-        $bookedany = $bookedany || $booked;
-    }
-    $booker->candisengage = $bookedany && has_capability('mod/scheduler:disengage', $context);
-
-    if ($scheduler->is_group_scheduling_enabled()) {
-        $booker->groupchoice = array();
-        foreach ($mygroupsforscheduling as $group) {
-            $booker->groupchoice[$group->id] = $group->name;
-        }
     }
 
 
@@ -182,7 +187,14 @@ if ($bookablecnt == 0) {
     echo $output->heading(get_string('slots', 'scheduler'), 3);
     echo html_writer::div($bookingmsg1, 'studentbookingmessage');
     echo html_writer::div($bookingmsg2, 'studentbookingmessage');
+    if ($total > $pagesize) {
+        echo $output->paging_bar($total, $offset, $pagesize, $actionurl, 'offset');
+    }
     echo $output->render($booker);
+    if ($total > $pagesize) {
+        echo $output->paging_bar($total, $offset, $pagesize, $actionurl, 'offset');
+    }
+
 }
 
 echo $output->footer($course);

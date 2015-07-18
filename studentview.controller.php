@@ -17,23 +17,10 @@ require_once($CFG->dirroot.'/mod/scheduler/mailtemplatelib.php');
 /************************************************ Saving choice ************************************************/
 if ($action == 'savechoice') {
     require_sesskey();
-    require_capability( 'mod/scheduler:appoint', $context);
+    require_capability('mod/scheduler:appoint', $context);
 
     // Get the request parameters.
-    $slotids = array();
-    $slotidsraw = optional_param_array('slotcheck', '', PARAM_INT);
-    if (empty($slotidsraw)) {
-        $slotid = optional_param('slotid', -1, PARAM_INT);
-        if ($slotid >= 0) {
-            $slotids[] = $slotid;
-        }
-    } else {
-        foreach ($slotidsraw as $k => $v) {
-            if (!empty($v)) {
-                $slotids[] = (int) $v;
-            }
-        }
-    }
+    $slotid = required_param('slotid', -1, PARAM_INT);
 
     $appointgroup = optional_param('appointgroup', 0, PARAM_INT);
 
@@ -46,40 +33,37 @@ if ($action == 'savechoice') {
     $errormessage = '';
 
     $bookinglimit = $scheduler->count_bookable_appointments($USER->id, true);
-    if ($bookinglimit >= 0 && count($slotids) > $bookinglimit) {
+    if ($bookinglimit == 0) {
         $errormessage = get_string('selectedtoomany', 'scheduler', $bookinglimit);
     }
-
     if (!$errormessage) {
         // Validate our slot ids.
         $slotidsvalidated = array();
         $slotidstoadd = array();
-        foreach ($slotids as $index => $slotid) {
-            $slot = $scheduler->get_slot($slotid);
+        $slot = $scheduler->get_slot($slotid);
 
-            $available = $slot->get_appointments();
-            $consumed = $slot->get_appointment_count();
+        $available = $slot->get_appointments();
+        $consumed = $slot->get_appointment_count();
 
-            $usersforslot = scheduler_get_appointed($slotid);
-            $alreadysignedup = (isset($usersforslot[$USER->id]));
+        $usersforslot = scheduler_get_appointed($slotid);
+        $alreadysignedup = (isset($usersforslot[$USER->id]));
 
-            if (!$alreadysignedup) {
-                $remaining = $slot->count_remaining_appointments();
-                // If the slot is already overcrowded...
-                if ($remaining >= 0 && $remaining < $requiredcapacity) {
-                    if ($updating = $DB->count_records('scheduler_appointment', array('slotid' => $slot->id, 'studentid' => $USER->id))) {
-                        $errormessage = get_string('alreadyappointed', 'scheduler');
-                    } else if ($requiredcapacity > 1) {
-                        $errormessage = get_string('notenoughplaces', 'scheduler');
-                    } else {
-                        $errormessage = get_string('slot_is_just_in_use', 'scheduler');
-                    }
-                    break;
+        if (!$alreadysignedup) {
+            $remaining = $slot->count_remaining_appointments();
+            // If the slot is already overcrowded...
+            if ($remaining >= 0 && $remaining < $requiredcapacity) {
+                if ($updating = $DB->count_records('scheduler_appointment', array('slotid' => $slot->id, 'studentid' => $USER->id))) {
+                    $errormessage = get_string('alreadyappointed', 'scheduler');
+                } else if ($requiredcapacity > 1) {
+                    $errormessage = get_string('notenoughplaces', 'scheduler');
+                } else {
+                    $errormessage = get_string('slot_is_just_in_use', 'scheduler');
                 }
-                $slotidstoadd[$index] = $slotid;
+                break;
             }
-            $slotidsvalidated[$index] = $slotid;
+            $slotidstoadd[$index] = $slotid;
         }
+        $slotidsvalidated[$index] = $slotid;
     }
 
     if ($errormessage) {
@@ -178,7 +162,7 @@ if ($action == 'savechoice') {
 // *********************************** Disengage from the slot (only the current student) ******************************/
 if ($action == 'disengage') {
     require_sesskey();
-    require_capability('mod/scheduler:disengage', $context);
+    require_capability('mod/scheduler:appoint', $context);
     $where = 'studentid = :studentid AND attended = 0 AND ' .
         'EXISTS(SELECT 1 FROM {scheduler_slots} sl WHERE sl.id = slotid AND sl.schedulerid = :scheduler AND sl.starttime > :cutoff)';
     $params = array('scheduler' => $scheduler->id, 'studentid' => $USER->id, 'cutoff' => time() + $scheduler->guardtime);
