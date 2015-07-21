@@ -25,7 +25,7 @@ $actionurl = new moodle_url('/mod/scheduler/view.php', array(
 
 $mygroups = groups_get_all_groups($scheduler->courseid, $USER->id, $cm->groupingid, 'g.id, g.name');
 if ($scheduler->is_group_scheduling_enabled()) {
-	$mygroupsforscheduling = groups_get_all_groups($scheduler->courseid, $USER->id, $scheduler->bookingrouping, 'g.id, g.name');
+    $mygroupsforscheduling = groups_get_all_groups($scheduler->courseid, $USER->id, $scheduler->bookingrouping, 'g.id, g.name');
 }
 
 echo $output->header();
@@ -35,7 +35,7 @@ echo $output->mod_intro($scheduler);
 
 
 $showowngrades = $scheduler->uses_grades();
-// Print total grade (if any)
+// Print total grade (if any).
 if ($showowngrades) {
     $totalgrade = $scheduler->get_user_grade($USER->id);
     $gradebookinfo = $scheduler->get_gradebook_info($USER->id);
@@ -84,7 +84,7 @@ if (count($pastslots) > 0) {
 $upcomingslots = $scheduler->get_upcoming_slots_for_student($USER->id);
 
 if (count($upcomingslots) > 0) {
-    $slottable = new scheduler_slot_table($scheduler, $showowngrades);
+    $slottable = new scheduler_slot_table($scheduler, $showowngrades, $actionurl);
     foreach ($upcomingslots as $slot) {
         $appointment = $slot->get_student_appointment($USER->id);
 
@@ -99,15 +99,15 @@ if (count($upcomingslots) > 0) {
             $others = null;
         }
 
-        $slottable->add_slot($slot, $appointment, $others, true);
+        $slottable->add_slot($slot, $appointment, $others, $slot->is_in_bookable_period());
     }
 
     echo $output->heading(get_string('upcomingslots', 'scheduler'), 3);
     echo $output->render($slottable);
 }
 
-$bookablecnt = $scheduler->count_bookable_appointments($USER->id, true);
-$bookableslots = array_values($scheduler->get_slots_available_to_student($USER->id, true, array_keys($mygroups)));
+$bookablecnt = $scheduler->count_bookable_appointments($USER->id, false);
+$bookableslots = array_values($scheduler->get_slots_available_to_student($USER->id, false, array_keys($mygroups)));
 
 if ($bookablecnt == 0) {
     echo html_writer::div(get_string('canbooknofurtherappointments', 'scheduler'), 'studentbookingmessage');
@@ -167,7 +167,7 @@ if ($bookablecnt == 0) {
             }
         }
 
-        $booker->add_slot($slot, !$booked, $booked, $groupinfo, $others);
+        $booker->add_slot($slot, true, false, $groupinfo, $others);
     }
 
 
@@ -184,7 +184,7 @@ if ($bookablecnt == 0) {
     }
     $bookingmsg2 = get_string($msgkey, 'scheduler', $a);
 
-    echo $output->heading(get_string('slots', 'scheduler'), 3);
+    echo $output->heading(get_string('availableslots', 'scheduler'), 3);
     echo html_writer::div($bookingmsg1, 'studentbookingmessage');
     echo html_writer::div($bookingmsg2, 'studentbookingmessage');
     if ($total > $pagesize) {

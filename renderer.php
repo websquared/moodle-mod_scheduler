@@ -16,7 +16,7 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 /**
  * A custom renderer class that extends the plugin_renderer_base and is used by the scheduler module.
  *
-*/
+ */
 class mod_scheduler_renderer extends plugin_renderer_base {
 
 
@@ -55,22 +55,24 @@ class mod_scheduler_renderer extends plugin_renderer_base {
 
     /**
      * Format a slot date and time, for use as a parameter in a language string.
-     * @param int $slotdate a timestamp, start time of the slot
-     * @param int $duration length of the slot in minutes
+     *
+     * @param int $slotdate
+     *            a timestamp, start time of the slot
+     * @param int $duration
+     *            length of the slot in minutes
      * @return stdClass date and time formatted for usage in language strings
      */
     public static function slotdatetime($slotdate, $duration) {
+        $shortformat = get_string('strftimedatetimeshort');
 
-    	$shortformat = get_string('strftimedatetimeshort');
+        $a = new stdClass();
+        $a->date = self::userdate($slotdate);
+        $a->starttime = self::usertime($slotdate);
+        $a->shortdatetime = userdate($slotdate, $shortformat);
+        $a->endtime = self::usertime($slotdate + $duration * MINSECS);
+        $a->duration = $duration;
 
-    	$a = new stdClass();
-    	$a->date = self::userdate($slotdate);
-    	$a->starttime = self::usertime($slotdate);
-    	$a->shortdatetime = userdate($slotdate, $shortformat);
-    	$a->endtime = self::usertime($slotdate + $duration * MINSECS);
-    	$a->duration = $duration;
-
-		return $a;
+        return $a;
     }
 
     protected $scalecache = array();
@@ -100,12 +102,11 @@ class mod_scheduler_renderer extends plugin_renderer_base {
      * @return string the formatted grade
      */
     public function format_grade($subject, $grade, $short = false) {
-
-		if ($subject instanceof scheduler_instance) {
-		    $scaleid = $subject->scale;
-		} else {
-		    $scaleid = (int) $subject;
-		}
+        if ($subject instanceof scheduler_instance) {
+            $scaleid = $subject->scale;
+        } else {
+            $scaleid = (int) $subject;
+        }
 
         $result = '';
         if ($scaleid == 0 || is_null($grade) ) {
@@ -318,13 +319,13 @@ class mod_scheduler_renderer extends plugin_renderer_base {
                 }
                 $rowdata[] = $gradedata;
             }
-
             if ($slottable->showactions) {
                 $actions = '';
                 if ($slot->cancancel) {
                     $buttonurl = new moodle_url($slottable->actionurl,
-                                     array('what' => 'cancel', 'appointmentid' => $slot->appointmentid));
+                                     array('what' => 'cancelbooking', 'slotid' => $slot->slotid));
                     $button = new single_button($buttonurl, get_string('cancelbooking', 'scheduler'));
+                    $actions .= $this->render($button);
                 }
                 $rowdata[] = $actions;
             }
@@ -417,10 +418,9 @@ class mod_scheduler_renderer extends plugin_renderer_base {
         $table = new html_table();
         $table->head  = array( get_string('date', 'scheduler'), get_string('start', 'scheduler'),
                         get_string('end', 'scheduler'), get_string('location', 'scheduler'),
-                        get_string('comments', 'scheduler'), get_string('choice', 'scheduler'),
-                        s($booker->scheduler->get_teacher_name()),
-                        get_string('groupsession', 'scheduler'));
-        $table->align = array ('left', 'left', 'left', 'left', 'left', 'center', 'left', 'left');
+                        get_string('comments', 'scheduler'), s($booker->scheduler->get_teacher_name()),
+                        get_string('groupsession', 'scheduler'), '');
+        $table->align = array ('left', 'left', 'left', 'left', 'left', 'left', 'left', 'left');
         $table->id = 'slotbookertable';
         $table->data = array();
 
@@ -463,11 +463,6 @@ class mod_scheduler_renderer extends plugin_renderer_base {
             $textoptions = array('context' => $booker->scheduler->context);
             $rowdata[] = format_text($slot->notes, $slot->notesformat, $textoptions);
 
-            $bookurl = new moodle_url($booker->actionurl, array('what' => 'savechoice', 'slotid' => $slot->slotid));
-            $button = new single_button($bookurl, get_string('bookslot', 'scheduler'));
-
-            $rowdata[] = $this->render($button);
-
             $rowdata[] = $this->user_profile_link($booker->scheduler, $slot->teacher);
 
             $groupinfo = $slot->bookedbyme ? get_string('complete', 'scheduler') : $slot->groupinfo;
@@ -476,6 +471,10 @@ class mod_scheduler_renderer extends plugin_renderer_base {
             }
 
             $rowdata[] = $groupinfo;
+
+            $bookurl = new moodle_url($booker->actionurl, array('what' => 'bookslot', 'slotid' => $slot->slotid));
+            $button = new single_button($bookurl, get_string('bookslot', 'scheduler'));
+            $rowdata[] = $this->render($button);
 
             $table->data[] = $rowdata;
 

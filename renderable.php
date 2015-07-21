@@ -23,6 +23,7 @@ class scheduler_slot_table implements renderable {
 
     public function add_slot(scheduler_slot $slotmodel, scheduler_appointment $appointmentmodel, $otherstudents, $cancancel = false) {
         $slot = new stdClass();
+        $slot->slotid = $slotmodel->id;
         $slot->starttime = $slotmodel->starttime;
         $slot->endtime = $slotmodel->endtime;
         $slot->attended = $appointmentmodel->attended;
@@ -43,9 +44,10 @@ class scheduler_slot_table implements renderable {
         $this->slots[] = $slot;
     }
 
-    public function __construct(scheduler_instance $scheduler, $showgrades=true) {
+    public function __construct(scheduler_instance $scheduler, $showgrades=true, $actionurl = null) {
         $this->scheduler = $scheduler;
         $this->showgrades = $showgrades;
+        $this->actionurl = $actionurl;
         $this->showactions = false;
     }
 
