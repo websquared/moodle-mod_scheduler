@@ -27,16 +27,6 @@ if ($action == 'bookslot') {
         throw new moodle_exception('error');
     }
 
-    $appointgroup = optional_param('appointgroup', 0, PARAM_INT);
-
-    // General permissions check.
-    require_capability('mod/scheduler:appoint', $context);
-    if ($appointgroup) {
-        if (!groups_is_member($appointgroup, $USER->id)) {
-            throw new moodle_exception('nopermissions');
-        }
-    }
-
     if (!$slot->is_in_bookable_period()) {
         throw new moodle_exception('nopermissions');
     }
@@ -91,7 +81,6 @@ if ($action == 'bookslot') {
         $appointment->attended = 0;
         $appointment->timecreated = time();
         $appointment->timemodified = time();
-        scheduler_update_grades($scheduler, $studentid);
 
         \mod_scheduler\event\booking_added::create_from_slot($slot)->trigger();
 
@@ -118,16 +107,6 @@ if ($action == 'cancelbooking') {
     $slot = $scheduler->get_slot($slotid);
     if (!$slot) {
         throw new moodle_exception('error');
-    }
-
-    $appointgroup = optional_param('appointgroup', 0, PARAM_INT);
-
-    // General permissions check.
-    require_capability('mod/scheduler:appoint', $context);
-    if ($appointgroup) {
-        if (!groups_is_member($appointgroup, $USER->id)) {
-            throw new moodle_exception('nopermissions');
-        }
     }
 
     if (!$slot->is_in_bookable_period()) {

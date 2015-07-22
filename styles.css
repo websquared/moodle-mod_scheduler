@@ -31,9 +31,9 @@ div .path-mod-scheduler .appointmentnote{
     margin-right:auto;
 }
 
-.path-mod-scheduler #slotbookertable tr.booked {
-    background-color : #E7EFE7;
-    font-weight : bold;
+.path-mod-scheduler #slotbookertable {
+    margin-left:auto;
+    margin-right:auto;
 }
 
 .path-mod-scheduler div.bookercontrols {
@@ -56,12 +56,12 @@ div .path-mod-scheduler .appointmentnote{
     padding: 0.5em; 
 } 
 
-.path-mod-scheduler div.commandbar span.title {
-    float: left; 
-    clear: right; 
-    width: 10em; 
-    text-align: left; 
-    font-weight: bold; 
+// Reduce space usage by single buttons in table cells
+.path-mod-scheduler table div.singlebutton div {
+    margin-bottom: 0px;
+}
+.path-mod-scheduler table div.singlebutton input {
+    margin: 0px;
 }
 
 .path-mod-scheduler div.commandbar .moodle-actionmenu {

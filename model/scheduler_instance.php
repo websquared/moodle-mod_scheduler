@@ -524,6 +524,13 @@ class scheduler_instance extends mvc_record_model {
         return $slots;
     }
 
+    public function has_slots_for_student($studentid, $mustbeattended, $mustbeunattended) {
+        $params = array();
+        $where = $this->student_in_slot_condition($params, $studentid, $mustbeattended, $mustbeunattended);
+        $cnt = $this->count_slots($where, $params);
+        return $cnt > 0;
+    }
+
     /**
      * retrieves slots without any appointment made
      */
