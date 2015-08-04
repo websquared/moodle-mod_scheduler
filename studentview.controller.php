@@ -61,7 +61,6 @@ if ($action == 'bookslot') {
             } else {
                 $errormessage = get_string('slot_is_just_in_use', 'scheduler');
             }
-            break;
         }
     }
 
@@ -117,7 +116,7 @@ if ($action == 'cancelbooking') {
 
     $userstocancel = array($USER->id);
     if ($appointgroup) {
-        $groupmembers = $scheduler->get_possible_attendees(array($appointgroup));
+        $userstocancel = array_keys($scheduler->get_possible_attendees(array($appointgroup)));
     }
 
     foreach ($userstocancel as $userid) {

@@ -83,7 +83,7 @@ class scheduler_student_list implements renderable {
         $this->students[] = $student;
     }
 
-    public function __construct(scheduler_instance $scheduler, $showgrades=true) {
+    public function __construct(scheduler_instance $scheduler, $showgrades = true) {
         $this->scheduler = $scheduler;
         $this->showgrades = $showgrades;
     }

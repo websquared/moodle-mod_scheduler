@@ -76,9 +76,9 @@ if ($scheduler->is_group_scheduling_enabled()) {
     foreach ($mygroupsforscheduling as $group) {
         $groupchoice[$group->id] = $group->name;
     }
-    $select = $output->single_select($actionurl, 'appointgroup', $groupchoice, $appointgroup, array(
-        0 => get_string('myself', 'scheduler')
-    ), 'appointgroupform');
+    $select = $output->single_select($actionurl, 'appointgroup', $groupchoice, $appointgroup,
+                                     array(0 => get_string('myself', 'scheduler')),
+                                     'appointgroupform');
     echo html_writer::div(get_string('appointforgroup', 'scheduler', $select), 'dropdownmenu');
 }
 
@@ -87,7 +87,7 @@ if ($scheduler->is_group_scheduling_enabled()) {
 $pastslots = $scheduler->get_attended_slots_for_student($USER->id);
 
 if (count($pastslots) > 0) {
-    $slottable = new scheduler_slot_table($scheduler, $showowngrades);
+    $slottable = new scheduler_slot_table($scheduler, $showowngrades || $scheduler->is_group_scheduling_enabled());
     foreach ($pastslots as $pastslot) {
         $appointment = $pastslot->get_student_appointment($USER->id);
 
@@ -112,16 +112,17 @@ if (count($pastslots) > 0) {
 $upcomingslots = $scheduler->get_upcoming_slots_for_student($USER->id);
 
 if (count($upcomingslots) > 0) {
-    $slottable = new scheduler_slot_table($scheduler, $showowngrades, $actionurl);
+    $slottable = new scheduler_slot_table($scheduler, $showowngrades || $scheduler->is_group_scheduling_enabled(), $actionurl);
     foreach ($upcomingslots as $slot) {
         $appointment = $slot->get_student_appointment($USER->id);
 
         if ($slot->is_groupslot() && has_capability('mod/scheduler:seeotherstudentsbooking', $context)) {
-            $showgrades = has_capability('mod/scheduler:seeotherstudentsresults', $context);
-            $others = new scheduler_student_list($scheduler, $showgrades);
+            $showothergrades = has_capability('mod/scheduler:seeotherstudentsresults', $context);
+            $others = new scheduler_student_list($scheduler);
             foreach ($slot->get_appointments() as $otherapp) {
                 $gradehidden = !$scheduler->uses_grades() ||
-                               ($scheduler->get_gradebook_info($otherapp->studentid)->hidden <> 0);
+                               ($scheduler->get_gradebook_info($otherapp->studentid)->hidden <> 0) ||
+                               (!$showothergrades && $otherapp->studentid <> $USER->id);
                 $others->add_student($otherapp, $otherapp->studentid == $USER->id, false, !$gradehidden);
             }
         } else {

@@ -64,10 +64,17 @@ div .path-mod-scheduler .appointmentnote{
     margin: 0px;
 }
 
+.path-mod-scheduler div.commandbar span.title {
+    float: left; 
+    clear: right; 
+    width: 10em; 
+    text-align: left; 
+    font-weight: bold;
+}
+
 .path-mod-scheduler div.commandbar .moodle-actionmenu {
     display: inline;
 }
-
 
 .path-mod-scheduler div.commandbar .moodle-actionmenu .menubar {
     width: 15em;
