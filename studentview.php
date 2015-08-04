@@ -70,7 +70,7 @@ if ($showowngrades) {
     }
 }
 
-// Print group selection menu if given
+// Print group selection menu if given.
 if ($scheduler->is_group_scheduling_enabled()) {
     $groupchoice = array();
     foreach ($mygroupsforscheduling as $group) {
