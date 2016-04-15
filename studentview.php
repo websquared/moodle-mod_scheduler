@@ -27,6 +27,11 @@ $urlparas = array(
 if ($appointgroup) {
     $urlparas['appointgroup'] = $appointgroup;
 }
+
+$teacherid = optional_param( 'teacherid', 0, PARAM_INT );
+if ( $teacherid ) {
+    $urlparas['teacherid'] = $teacherid;
+}
 $actionurl = new moodle_url('/mod/scheduler/view.php', $urlparas);
 
 
@@ -135,8 +140,8 @@ if (count($upcomingslots) > 0) {
     echo $output->render($slottable);
 }
 
-$bookablecnt = $scheduler->count_bookable_appointments($USER->id, false);
-$bookableslots = array_values($scheduler->get_slots_available_to_student($USER->id, false));
+$bookablecnt = $scheduler->count_bookable_appointments($USER->id, false, $teacherid);
+$bookableslots = array_values($scheduler->get_slots_available_to_student($USER->id, false, $teacherid));
 
 if ($bookablecnt == 0) {
     echo html_writer::div(get_string('canbooknofurtherappointments', 'scheduler'), 'studentbookingmessage');

@@ -500,3 +500,7 @@ with the {$a->staffrole} <strong><a href="{$a->attendant_url}">{$a->attendant}</
 <p>in the scheduler "<em><a href="{$a->scheduler_url}">{$a->module}</a></em>" on the website: <strong><a href="{$a->site_url}">{$a->site}</a></strong></p>
 
 <p><strong><span class="error">has been cancelled</span></strong>. Please apply for a new slot.</p>';
+
+$string['nomeetingsessions'] = 'You do not have any available meeting sessions left. Please contact customer support.';
+$string['nomeetingsessionsshort'] = 'You do not have any meeting sessions left';
+

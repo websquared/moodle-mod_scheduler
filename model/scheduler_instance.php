@@ -498,6 +498,11 @@ class scheduler_instance extends mvc_record_model {
 
         $params = array();
         $wherecond = '(s.starttime > :cutofftime) AND (s.hideuntil < :nowhide)';
+ 
+        if ( $teacherid ) {
+            $wherecond .= ' AND teacherid=' . $teacherid;
+        }
+
         $params['nowhide'] = time();
         $params['cutofftime'] = time() + $this->guardtime;
         $subcond = '(s.exclusivity = 0 OR s.exclusivity > '.$this->appointment_count_query().')'
@@ -627,6 +632,10 @@ class scheduler_instance extends mvc_record_model {
             $sql .= ' AND (s.starttime <= :cutofftime OR a.attended = 1)';
         }
         $params = array('schedulerid' => $this->id, 'studentid' => $studentid, 'cutofftime' => time() + $this->guardtime);
+
+        if ( $teacherid ) {
+            $params['teacherid'] = $teacherid;
+        }
 
         $booked = $DB->count_records_sql($sql, $params);
         $allowed = $this->maxbookings;
