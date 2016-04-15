@@ -34,7 +34,7 @@ if ($action == 'bookslot') {
         throw new moodle_exception('nopermissions');
     }
 
-    if ( ! $USER->profile_field_meetingsessions ) {
+    if ( isset( $USER->profile_field_meetingsessions ) && ! $USER->profile_field_meetingsessions ) {
         throw new moodle_exception( 'nopermissions', '', '', get_string( 'nomeetingsessions', 'scheduler' ) );
     }
 

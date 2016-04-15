@@ -494,14 +494,18 @@ class scheduler_instance extends mvc_record_model {
      * @uses $DB
      */
     public function get_slots_available_to_student($studentid, $includebooked = false) {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
 
         $params = array();
         $wherecond = '(s.starttime > :cutofftime) AND (s.hideuntil < :nowhide)';
- 
-        if ( $teacherid ) {
-            $wherecond .= ' AND teacherid=' . $teacherid;
-        }
+
+
+	    if ( get_config( 'block_fn_mentor', 'version' ) ) {
+		    $mentors = block_fn_mentor_get_mentors( $USER->id );
+		    if ( $mentors && count( $mentors ) > 0 ) {
+			    $wherecond .= ' AND teacherid=' . array_values($mentors)[0]->mentorid;
+		    }
+	    }
 
         $params['nowhide'] = time();
         $params['cutofftime'] = time() + $this->guardtime;
@@ -617,7 +621,7 @@ class scheduler_instance extends mvc_record_model {
      * @return int the number of bookable or changeable appointments, possibly 0; returns -1 if unlimited.
      */
     public function count_bookable_appointments($studentid, $includechangeable = true) {
-        global $DB;
+        global $DB, $USER;
 
         // find how many slots have already been booked
         $sql = 'SELECT COUNT(*) FROM {scheduler_slots} s'
@@ -633,9 +637,12 @@ class scheduler_instance extends mvc_record_model {
         }
         $params = array('schedulerid' => $this->id, 'studentid' => $studentid, 'cutofftime' => time() + $this->guardtime);
 
-        if ( $teacherid ) {
-            $params['teacherid'] = $teacherid;
-        }
+	    if ( get_config( 'block_fn_mentor', 'version' ) ) {
+		    $mentors = block_fn_mentor_get_mentors( $USER->id );
+		    if ( $mentors && count( $mentors ) > 0 ) {
+			    $params['teacherid'] = array_values($mentors)[0]->mentorid;
+		    }
+	    }
 
         $booked = $DB->count_records_sql($sql, $params);
         $allowed = $this->maxbookings;

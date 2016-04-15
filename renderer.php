@@ -478,9 +478,9 @@ class mod_scheduler_renderer extends plugin_renderer_base {
                 'teacherid' => $teacherid = optional_param( 'teacherid', 0, PARAM_INT )
             ) );
             global $USER;
-            if ( ! $USER->profile_field_meetingsessions ) {
-                $rowdata[] = get_string( 'nomeetingsessionsshort', 'scheduler' );
-            } else {
+	        if ( isset( $USER->profile_field_meetingsessions ) && ! $USER->profile_field_meetingsessions ) {
+		        $rowdata[] = get_string( 'nomeetingsessionsshort', 'scheduler' );
+	        } else {
             $button = new single_button($bookurl, get_string('bookslot', 'scheduler'));
             $rowdata[] = $this->render($button);
             }
