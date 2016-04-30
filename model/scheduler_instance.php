@@ -500,12 +500,14 @@ class scheduler_instance extends mvc_record_model {
         $wherecond = '(s.starttime > :cutofftime) AND (s.hideuntil < :nowhide)';
 
 
+        //F_START
 	    if ( get_config( 'block_fn_mentor', 'version' ) ) {
 		    $mentors = block_fn_mentor_get_mentors( $USER->id );
 		    if ( $mentors && count( $mentors ) > 0 ) {
 			    $wherecond .= ' AND teacherid=' . array_values($mentors)[0]->mentorid;
 		    }
 	    }
+        //F_END
 
         $params['nowhide'] = time();
         $params['cutofftime'] = time() + $this->guardtime;
@@ -637,12 +639,14 @@ class scheduler_instance extends mvc_record_model {
         }
         $params = array('schedulerid' => $this->id, 'studentid' => $studentid, 'cutofftime' => time() + $this->guardtime);
 
+        //F_START
 	    if ( get_config( 'block_fn_mentor', 'version' ) ) {
 		    $mentors = block_fn_mentor_get_mentors( $USER->id );
 		    if ( $mentors && count( $mentors ) > 0 ) {
 			    $params['teacherid'] = array_values($mentors)[0]->mentorid;
 		    }
 	    }
+        //F_END
 
         $booked = $DB->count_records_sql($sql, $params);
         $allowed = $this->maxbookings;
